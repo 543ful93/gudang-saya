@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Gudang Modern</title>
+    <!-- Library untuk PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <!-- Icon Library -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --background: #f1f5f9;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 8px;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- LOGIN SCREEN --- */
+        #login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-card {
+            background: var(--surface);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: white;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            width: auto;
+        }
+
+        /* --- MAIN APP LAYOUT --- */
+        #app-layout {
+            display: none; /* Hidden by default */
+            height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        .nav-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: #eff6ff;
+            color: var(--primary);
+        }
+
+        .nav-link i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .submenu {
+            display: none;
+            padding-left: 2.5rem;
+            margin-top: 0.25rem;
+        }
+        
+        .submenu.open {
+            display: block;
+        }
+
+        .submenu-link {
+            display: block;
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .submenu-link:hover {
+            color: var(--primary);
+        }
+
+        .user-profile {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        /* Dashboard Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        /* Tables */
+        .table-container {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .table-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            font-size: 0.95rem;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-active { background-color: #dcfce7; color: #166534; }
+        .status-inactive { background-color: #fee2e2; color: #991b1b; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: var(--surface);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.open .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .grid-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 3000;
+        }
+
+        .toast {
+            background: var(--surface);
+            border-left: 4px solid var(--success);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Simple Chart Bars */
+        .chart-container {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            padding-top: 2rem;
+        }
+        .bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+        .bar {
+            width: 40px;
+            background-color: var(--primary);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.5s;
+        }
+        .bar-label {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                height: 100%;
+                transform: translateX(-100%);
+                z-index: 100;
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .grid-form {
+                grid-template-columns: 1fr;
+            }
+            .full-width {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="fas fa-boxes-stacked"></i>
+            </div>
+            <h2>Gudang System</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Silakan login untuk melanjutkan</p>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="username" class="form-input" placeholder="Masukkan username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Masukkan password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- APP LAYOUT -->
+    <div id="app-layout" style="display: none;">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-boxes"></i> WMS Gudang
+            </div>
+            <div class="nav-menu">
+                <!-- Dashboard -->
+                <div class="nav-item">
+                    <a href="#" class="nav-link active" onclick="showPage('dashboard')">
+                        <span><i class="fas fa-home"></i> Dashboard</span>
+                    </a>
+                </div>
+
+                <!-- Barang / ONT -->
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="toggleSubmenu('submenu-ont')">
+                        <span><i class="fas fa-server"></i> Barang (ONT)</span>
+                        <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
+                    </a>
+                    <div id="submenu-ont" class="submenu">
+                        <a href="#" class="submenu-link" onclick="showPage('ont-masuk')">ONT Masuk</a>
+                        <a href="#" class="submenu-link" onclick="showPage('ont-keluar')">ONT Keluar</a>
+                    </div>
+                </div>
+
+                <!-- Precon -->
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="toggleSubmenu('submenu-precon')">
+                        <span><i class="fas fa-network-wired"></i> Precon</span>
+                        <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
+                    </a>
+                    <div id="submenu-precon" class="submenu">
+                        <a href="#" class="submenu-link" onclick="showPage('precon-masuk')">Precon Masuk</a>
+                        <a href="#" class="submenu-link" onclick="showPage('precon-keluar')">Precon Keluar</a>
+                    </div>
+                </div>
+
+                <!-- Aksesoris -->
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="toggleSubmenu('submenu-aksesoris')">
+                        <span><i class="fas fa-plug"></i> Aksesoris</span>
+                        <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
+                    </a>
+                    <div id="submenu-aksesoris" class="submenu">
+                        <a href="#" class="submenu-link" onclick="showPage('stb')">STB</a>
+                        <a href="#" class="submenu-link" onclick="showPage('router')">Router</a>
+                    </div>
+                </div>
+
+                <!-- Material -->
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="toggleSubmenu('submenu-material')">
+                        <span><i class="fas fa-tools"></i> Material</span>
+                        <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
+                    </a>
+                    <div id="submenu-material" class="submenu">
+                        <a href="#" class="submenu-link" onclick="showPage('material-masuk')">Material Masuk</a>
+                        <a href="#" class="submenu-link" onclick="showPage('material-keluar')">Material Keluar</a>
+                    </div>
+                </div>
+
+                <!-- Barang Collect -->
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="showPage('collect')">
+                        <span><i class="fas fa-box-open"></i> Barang Collect</span>
+                    </a>
+                </div>
+                
+                <!-- Admin Only Menu -->
+                <div class="nav-item admin-only" style="display: none;">
+                    <a href="#" class="nav-link" onclick="showPage('settings')">
+                        <span><i class="fas fa-cog"></i> Settings</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="user-profile">
+                <div class="avatar" id="user-avatar">A</div>
+                <div style="flex: 1; overflow: hidden;">
+                    <div style="font-weight: 600; font-size: 0.9rem;" id="user-name">Admin</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);" id="user-role">Administrator</div>
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="logout()" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <div class="topbar">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn btn-sm btn-secondary" onclick="toggleSidebar()" style="display: none;" id="mobile-menu-btn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2 class="page-title" id="page-title">Dashboard</h2>
+                </div>
+                <div>
+                    <span class="status-badge status-active" id="connection-status">Online</span>
+                </div>
+            </div>
+
+            <div class="content-area" id="content-area">
+                <!-- Content will be injected here via JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL FORM -->
+    <div class="modal-overlay" id="form-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Form Input</h3>
+                <button class="btn btn-sm btn-secondary" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="dynamic-form" class="grid-form">
+                    <!-- Dynamic Fields Generated via JS -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+                <button class="btn btn-primary" onclick="submitForm()">
+                    <i class="fas fa-paper-plane"></i> Kirim ke Google Sheet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        // --- DATA & CONFIG ---
+        const USERS = [
+            { user: 'serang', pass: 'serang123', name: 'DB_Serang', role: 'admin', status: 'Aktif', sheetId: '1ICCCjYj5wRuLghmbaW6xSW7URhxNt1qONwXAjQBZrCk' },
+            { user: 'user', pass: 'user123', name: 'Tim Lapangan', role: 'user', status: 'Tidak Aktif', sheetId: '1ICCCjYj5wRuLghmbaW6xSW7URhxNt1qONwXAjQBZrCk' },
+            { user: 'jkt', pass: 'jkt1234', name: 'db-jkt', role: 'user', status: 'Aktif', sheetId: '1AS4OXfJ3T78EwcawhdiVsC5-Ir6FaS5Nt8d3o1zgg_k' }
+        ];
+
+        // Mock Database for local interaction
+        const DB = {
+            'ont-masuk': [],
+            'ont-keluar': [],
+            'precon-masuk': [],
+            'precon-keluar': [],
+            'collect': []
+        };
+
+        let currentUser = null;
+        let currentPage = 'dashboard';
+        let currentModalType = '';
+
+        // --- AUTHENTICATION ---
+        const loginForm = document.getElementById('login-form');
+        const loginScreen = document.getElementById('login-screen');
+        const appLayout = document.getElementById('app-layout');
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+
+            const foundUser = USERS.find(user => user.user === u && user.pass === p);
+
+            if (foundUser) {
+                currentUser = foundUser;
+                loginScreen.style.display = 'none';
+                appLayout.style.display = 'flex';
+                initApp();
+                showToast(`Selamat datang, ${currentUser.name}!`, 'success');
+            } else {
+                showToast('Username atau password salah!', 'error');
+            }
+        });
+
+        function logout() {
+            currentUser = null;
+            appLayout.style.display = 'none';
+            loginScreen.style.display = 'flex';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // --- APP INITIALIZATION ---
+        function initApp() {
+            // Update UI User Info
+            document.getElementById('user-name').innerText = currentUser.name;
+            document.getElementById('user-role').innerText = currentUser.role.toUpperCase();
+            document.getElementById('user-avatar').innerText = currentUser.name.charAt(0).toUpperCase();
+
+            // Admin menu visibility
+            if (currentUser.role === 'admin') {
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+            }
+
+            // Responsive check
+            if (window.innerWidth <= 768) {
+                document.getElementById('mobile-menu-btn').style.display = 'block';
+            }
+
+            showPage('dashboard');
+        }
+
+        // --- NAVIGATION ---
+        function toggleSubmenu(id) {
+            document.querySelectorAll('.submenu').forEach(el => {
+                if (el.id !== id) el.classList.remove('open');
+            });
+            const el = document.getElementById(id);
+            el.classList.toggle('open');
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function showPage(page) {
+            currentPage = page;
+            
+            // Update active link styling
+            document.querySelectorAll('.nav-link, .submenu-link').forEach(l => l.classList.remove('active'));
+            // Simple heuristic to highlight menu
+            const link = document.querySelector(`a[onclick="showPage('${page}')"]`);
+            if(link) link.classList.add('active');
+
+            // Close mobile sidebar if open
+            document.getElementById('sidebar').classList.remove('active');
+
+            const content = document.getElementById('content-area');
+            const title = document.getElementById('page-title');
+
+            if (page === 'dashboard') {
+                title.innerText = 'Dashboard Overview';
+                renderDashboard(content);
+            } else if (page === 'settings') {
+                title.innerText = 'Pengaturan Sistem';
+                renderSettings(content);
+            } else {
+                // Handle Data Pages
+                title.innerText = page.replace('-', ' ').toUpperCase();
+                renderTablePage(page, content);
+            }
+        }
+
+        // --- DASHBOARD RENDER ---
+        function renderDashboard(container) {
+            // Calculate Totals (Mock logic)
+            const totalPreconMasuk = DB['precon-masuk'].reduce((acc, curr) => acc + (parseInt(curr.p35)||0) + (parseInt(curr.p50)||0) + (parseInt(curr.p75)||0) + (parseInt(curr.p100)||0), 0);
+            const totalOntKeluar = DB['ont-keluar'].length;
+            const totalCollect = DB['collect'].length;
+
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card" style="border-color: #3b82f6;">
+                        <div class="stat-label">Total Precon Masuk</div>
+                        <div class="stat-value">${totalPreconMasuk} Pcs</div>
+                    </div>
+                    <div class="stat-card" style="border-color: #10b981;">
+                        <div class="stat-label">ONT Terpakai (Keluar)</div>
+                        <div class="stat-value">${totalOntKeluar} Unit</div>
+                    </div>
+                    <div class="stat-card" style="border-color: #f59e0b;">
+                        <div class="stat-label">Barang Collect</div>
+                        <div class="stat-value">${totalCollect} Set</div>
+                    </div>
+                    <div class="stat-card" style="border-color: #6366f1;">
+                        <div class="stat-label">Status User</div>
+                        <div class="stat-value" style="font-size: 1.2rem;">${currentUser.status}</div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3>Grafik Penggunaan Barang</h3>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div class="chart-container">
+                            <div class="bar-group">
+                                <div class="bar" style="height: ${Math.min(totalPreconMasuk * 2, 150)}px;"></div>
+                                <div class="bar-label">Precon</div>
+                            </div>
+                            <div class="bar-group">
+                                <div class="bar" style="height: ${Math.min(totalOntKeluar * 5, 150)}px; background-color: #10b981;"></div>
+                                <div class="bar-label">ONT</div>
+                            </div>
+                            <div class="bar-group">
+                                <div class="bar" style="height: ${Math.min(totalCollect * 10, 150)}px; background-color: #f59e0b;"></div>
+                                <div class="bar-label">Collect</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- TABLE & FORM CONFIG ---
+        const PAGE_CONFIG = {
+            'ont-masuk': {
+                headers: ['NO', 'SN/MAC', 'NAMA BARANG', 'TANGGAL MASUK', 'STATUS', 'PCS'],
+                fields: [
+                    { name: 'sn', label: 'SN/MAC', type: 'text', col: 1 },
+                    { name: 'nama', label: 'NAMA BARANG', type: 'text', col: 1 },
+                    { name: 'tanggal', label: 'TANGGAL MASUK', type: 'date', col: 1 },
+                    { name: 'status', label: 'STATUS', type: 'select', options: ['Baik', 'Rusak'], col: 1 },
+                    { name: 'pcs', label: 'PCS', type: 'number', col: 1 }
+                ]
+            },
+            'ont-keluar': {
+                headers: ['NO', 'SN/MAC', 'NAMA BARANG', 'TANGGAL MASUK', 'STATUS', 'SATUAN', 'TANGGAL KELUAR', 'ID CUST', 'TIM 1', 'TIM 2'],
+                fields: [
+                    { name: 'sn', label: 'SN/MAC', type: 'text', col: 1 },
+                    { name: 'nama', label: 'NAMA BARANG', type: 'text', col: 1 },
+                    { name: 'tgl_masuk', label: 'TANGGAL MASUK', type: 'date', col: 1 },
+                    { name: 'status', label: 'STATUS', type: 'text', col: 1 },
+                    { name: 'satuan', label: 'SATUAN', type: 'text', col: 1 },
+                    { name: 'tgl_keluar', label: 'TANGGAL KELUAR', type: 'date', col: 1 },
+                    { name: 'id_cust', label: 'ID CUST', type: 'text', col: 1 },
+                    { name: 'tim1', label: 'TIM 1', type: 'text', col: 1 },
+                    { name: 'tim2', label: 'TIM 2', type: 'text', col: 1 }
+                ]
+            },
+            'precon-masuk': {
+                headers: ['TANGGAL', '35 M', '50 M', '75 M', '100 M', '150 M', '200 M', '250 M'],
+                fields: [
+                    { name: 'tanggal', label: 'TANGGAL', type: 'date', col: 2 },
+                    { name: 'p35', label: '35 Meter', type: 'number', col: 1 },
+                    { name: 'p50', label: '50 Meter', type: 'number', col: 1 },
+                    { name: 'p75', label: '75 Meter', type: 'number', col: 1 },
+                    { name: 'p100', label: '100 Meter', type: 'number', col: 1 },
+                    { name: 'p150', label: '150 Meter', type: 'number', col: 1 },
+                    { name: 'p200', label: '200 Meter', type: 'number', col: 1 },
+                    { name: 'p250', label: '250 Meter', type: 'number', col: 1 }
+                ]
+            },
+            'precon-keluar': {
+                headers: ['NO', 'TANGGAL', 'METER', 'ID CUST', 'PCS'],
+                fields: [
+                    { name: 'tanggal', label: 'TANGGAL', type: 'date', col: 1 },
+                    { name: 'meter', label: 'METER', type: 'select', options: ['35', '50', '75', '100', '150', '200', '250'], col: 1 },
+                    { name: 'id_cust', label: 'ID CUST', type: 'text', col: 1 },
+                    { name: 'pcs', label: 'PCS', type: 'number', col: 1 }
+                ]
+            },
+            'collect': {
+                headers: ['NO', 'MAC/SN ONT', 'SN STB', 'SMART CARD', 'ADAPTOR', 'HDMI', 'REMOTE'],
+                fields: [
+                    { name: 'sn_ont', label: 'MAC/SN ONT', type: 'text', col: 2 },
+                    { name: 'sn_stb', label: 'SN STB', type: 'text', col: 2 },
+                    { name: 'smartcard', label: 'SMART CARD', type: 'text', col: 1 },
+                    { name: 'adaptor', label: 'ADAPTOR', type: 'text', col: 1 },
+                    { name: 'hdmi', label: 'HDMI', type: 'text', col: 1 },
+                    { name: 'remote', label: 'REMOTE', type: 'text', col: 1 }
+                ]
+            }
+        };
+
+        // Generic pages (STB, Router, Material) can use similar config or generic fallback
+        ['stb', 'router', 'material-masuk', 'material-keluar'].forEach(page => {
+            if (!PAGE_CONFIG[page]) {
+                PAGE_CONFIG[page] = {
+                    headers: ['NO', 'NAMA BARANG', 'JUMLAH', 'KETERANGAN', 'TANGGAL'],
+                    fields: [
+                        { name: 'nama', label: 'NAMA BARANG', type: 'text', col: 2 },
+                        { name: 'jumlah', label: 'JUMLAH', type: 'number', col: 1 },
+                        { name: 'ket', label: 'KETERANGAN', type: 'text', col: 1 },
+                        { name: 'tanggal', label: 'TANGGAL', type: 'date', col: 1 }
+                    ]
+                };
+            }
+        });
+
+        function renderTablePage(page, container) {
+            // Init DB array if empty
+            if (!DB[page]) DB[page] = [];
+            const config = PAGE_CONFIG[page];
+            const data = DB[page];
+
+            let html = `
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3>Data ${page.replace('-', ' ')}</h3>
+                        <div class="table-actions">
+                            <button class="btn btn-sm btn-primary" onclick="openModal('${page}')">
+                                <i class="fas fa-plus"></i> Input Data
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="downloadPDF('${page}')">
+                                <i class="fas fa-file-pdf"></i> Download PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table id="table-${page}">
+                            <thead>
+                                <tr>
+                                    ${config.headers.map(h => `<th>${h}</th>`).join('')}
+                                    ${currentUser.role === 'admin' ? '<th>AKSI</th>' : ''}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.length === 0 ? '<tr><td colspan="10" style="text-align:center;">Belum ada data</td></tr>' : 
+                                  data.map((row, idx) => `
+                                    <tr>
+                                        <td>${idx + 1}</td>
+                                        ${Object.keys(row).map(key => `<td>${row[key]}</td>`).join('')}
+                                        ${currentUser.role === 'admin' ? 
+                                          `<td>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteRow('${page}', ${idx})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                           </td>` : ''}
+                                    </tr>
+                                  `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        // --- FORM HANDLING ---
+        function openModal(page) {
+            currentModalType = page;
+            const config = PAGE_CONFIG[page];
+            const form = document.getElementById('dynamic-form');
+            document.getElementById('modal-title').innerText = `Input ${page.replace('-', ' ').toUpperCase()}`;
+            
+            form.innerHTML = config.fields.map(field => {
+                let input = '';
+                if (field.type === 'select') {
+                    input = `<select name="${field.name}" class="form-input" required>
+                                ${field.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+                             </select>`;
+                } else {
+                    input = `<input type="${field.type}" name="${field.name}" class="form-input" required>`;
+                }
+                return `
+                    <div class="form-group" style="grid-column: span ${field.col || 1}">
+                        <label class="form-label">${field.label}</label>
+                        ${input}
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('form-modal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('form-modal').classList.remove('open');
+            document.getElementById('dynamic-form').reset();
+        }
+
+        function submitForm() {
+            const form = document.getElementById('dynamic-form');
+            const formData = new FormData(form);
+            const dataObj = {};
+            formData.forEach((value, key) => dataObj[key] = value);
+
+            // Simulasi Loading
+            const btn = document.querySelector('.modal-footer .btn-primary');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+            btn.disabled = true;
+
+            // Simulasi Kirim ke Google Sheet
+            setTimeout(() => {
+                // 1. Simpan ke Local DB (Mock)
+                if (!DB[currentModalType]) DB[currentModalType] = [];
+                DB[currentModalType].push(dataObj);
+
+                // 2. Update Tabel
+                renderTablePage(currentModalType, document.getElementById('content-area'));
+                
+                // 3. Success Feedback
+                closeModal();
+                showToast('Data berhasil dikirim ke Google Sheet!', 'success');
+                
+                // Reset Button
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+
+                // Log data for Sheet simulation
+                console.log(`[GOOGLE SHEET SIMULATION - SheetID: ${currentUser.sheetId}]`, JSON.stringify(dataObj));
+                
+                // Logic Update Dashboard Charts jika diperlukan
+                if (currentPage === 'dashboard') renderDashboard(document.getElementById('content-area'));
+
+            }, 1500);
+        }
+
+        function deleteRow(page, index) {
+            if(confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                DB[page].splice(index, 1);
+                renderTablePage(page, document.getElementById('content-area'));
+                showToast('Data dihapus', 'success');
+            }
+        }
+
+        // --- PDF DOWNLOAD ---
+        function downloadPDF(page) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const config = PAGE_CONFIG[page];
+            const data = DB[page];
+
+            doc.text(`Laporan ${page.toUpperCase()}`, 14, 15);
+            doc.text(`User: ${currentUser.name}`, 14, 22);
+            doc.text(`Tanggal: ${new Date().toLocaleDateString()}`, 14, 29);
+
+            const headers = config.headers;
+            const rows = data.map((row, idx) => {
+                return [idx + 1, ...Object.values(row)];
+            });
+
+            doc.autoTable({
+                head: [headers],
+                body: rows,
+                startY: 35,
+            });
+
+            doc.save(`laporan-${page}.pdf`);
+            showToast('PDF sedang diunduh...', 'success');
+        }
+
+        // --- UTILS ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            if (type === 'error') toast.style.borderLeftColor = 'var(--danger)';
+            
+            toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}" 
+                   style="color: ${type === 'success' ? 'var(--success)' : 'var(--danger)'}"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function renderSettings(container) {
+            container.innerHTML = `
+                <div class="stat-card" style="max-width: 600px; margin: 0 auto;">
+                    <h3>Konfigurasi Sistem</h3>
+                    <div style="margin-top: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Sheet ID Kota</label>
+                            <input type="text" class="form-input" value="${currentUser.sheetId}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Role Login</label>
+                            <input type="text" class="form-input" value="${currentUser.role}" readonly>
+                        </div>
+                         <div class="form-group">
+                            <label class="form-label">Status Akun</label>
+                            <input type="text" class="form-input" value="${currentUser.status}" readonly>
+                        </div>
+                        <p style="font-size: 0.8rem; color: #64748b; margin-top: 1rem;">
+                            * Pengaturan sistem hanya dapat diubah oleh Super Admin melalui database atau file konfigurasi.
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+    </script>
+</body>
+</html>
